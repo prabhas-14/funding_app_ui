@@ -1,4 +1,6 @@
 /* src/App.module.css */
+/* ... (all previous styles up to .allMarketsTitle) ... */
+
 .dashboardContainer {
     min-height: 100vh;
     background-color: #111827;
@@ -54,15 +56,23 @@
     margin-left: auto;
     margin-right: auto;
     display: grid;
-    grid-template-columns: 1fr; /* Mobile: single column */
-    gap: 1.5rem; /* Consistent gap */
+    grid-template-columns: 1fr; 
+    gap: 1.5rem; 
   }
   
-  @media (min-width: 1024px) { /* lg breakpoint */
+  @media (min-width: 1024px) { 
     .layoutGrid {
-      /* Two columns: left takes 1 part, right takes 2 parts */
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); 
-      /* Using minmax(0, Xfr) is often more robust for grid item sizing */
+      grid-template-columns: minmax(0, 320px) 1fr; 
+      /* For debugging layoutGrid: */
+      /* background-color: rgba(100, 0, 0, 0.1); */
+    }
+    .leftColumn {
+      /* For debugging leftColumn: */
+      /* background-color: rgba(0, 100, 0, 0.1); */
+    }
+    .rightColumn {
+      /* For debugging rightColumn: */
+      /* background-color: rgba(0, 0, 100, 0.1); */
     }
   }
   
@@ -70,12 +80,13 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem; 
-    min-width: 0; /* Prevent grid item from overflowing its track */
+    min-width: 0; 
   }
   
   .rightColumn {
-    min-width: 0; /* Prevent grid item from overflowing its track */
-    /* This is also a .card, so card styles apply */
+    min-width: 0; 
+    display: flex; 
+    flex-direction: column; 
   }
   
   
@@ -86,7 +97,12 @@
     padding: 1rem; 
     display: flex; 
     flex-direction: column; 
+    min-height: 0; 
   }
+  .rightColumn.card { 
+      flex-grow: 1; 
+  }
+  
   
   @media (min-width: 640px) { 
       .card {
@@ -139,18 +155,18 @@
   }
   
   .tableContainer, .allMarketsTableContainer {
-    overflow-x: auto; /* Allow horizontal scroll for tables */
+    overflow-x: auto; 
     flex-grow: 1; 
     min-height: 0; 
-    width: 100%; /* Ensure it takes full width before scrolling */
+    width: 100%; 
   }
   
   .allMarketsTableContainer {
-    max-height: calc(100vh - 320px); /* Adjusted max-height slightly */
+    max-height: calc(100vh - 350px); 
   }
   @media (max-width: 1023px) { 
       .allMarketsTableContainer {
-          max-height: 55vh; /* Adjusted for smaller screens */
+          max-height: 50vh; 
       }
   }
   
@@ -160,14 +176,14 @@
   }
   
   .table th, .table td {
-    padding: 0.6rem 0.75rem; /* Adjusted padding slightly */
+    padding: 0.6rem 0.75rem; 
     white-space: nowrap;
     font-size: 0.875rem; 
     border-bottom: 1px solid #374151; 
   }
   
   .table thead {
-    background-color: rgba(31, 41, 55, 0.85); /* Slightly more opaque bg-gray-800 equivalent */
+    background-color: rgba(31, 41, 55, 0.9); 
     position: sticky; 
     top: 0;
     z-index: 10;
@@ -199,6 +215,10 @@
   .table td.textRight, .table th.textRight {
     text-align: right;
   }
+  .table td.textCenter, .table th.textCenter {
+    text-align: center;
+  }
+  
   
   .table tbody tr:hover {
     background-color: rgba(55, 65, 81, 0.9); 
@@ -232,11 +252,10 @@
     text-align: center;
   }
   
-  /* --- Filter Area Refinements --- */
   .allMarketsHeader {
       display: flex;
-      flex-wrap: wrap; /* Allow wrapping on very small screens if necessary */
-      justify-content: space-between; /* Default for larger screens */
+      flex-wrap: wrap; 
+      justify-content: space-between; 
       align-items: center;
       gap: 0.75rem; 
       margin-bottom: 0.75rem; 
@@ -245,7 +264,7 @@
   .allMarketsTitle {
       margin-bottom: 0; 
       flex-shrink: 0; 
-      font-size: 1.125rem; /* Consistent with other card titles */
+      font-size: 1.125rem; 
       line-height: 1.75rem;
       font-weight: 600;
       color: #7dd3fc;
@@ -256,33 +275,46 @@
       }
   }
   
-  
+  /* --- Styles for Filter Input with Clear Button --- */
   .filterInputContainer {
-      position: relative;
-      display: flex; /* Use flex to contain the icon and input */
-      align-items: center;
-      width: 100%; /* Full width on mobile when header wraps */
+      position: relative; /* This is essential for absolute positioning of children */
+      display: flex;     /* To align items if there were multiple non-absolute children */
+      align-items: center;/* Vertically aligns direct children if container has intrinsic height */
+      width: 100%; 
+      /* For debugging: */
+      /* border: 1px solid lime;  */
   }
   
-  @media (min-width: 480px) { /* Adjust breakpoint for filter input width */
+  @media (min-width: 520px) { 
       .filterInputContainer {
-          width: auto; /* Allow it to shrink */
+          width: auto; 
           min-width: 200px; 
           max-width: 300px; 
+          flex-grow: 1; 
+      }
+      .allMarketsHeader {
+          flex-wrap: nowrap; 
       }
   }
-  
   
   .filterInput {
       background-color: #374151; 
       color: #d1d5db; 
       border-radius: 0.375rem; 
-      padding: 0.5rem 0.75rem 0.5rem 2.5rem; /* Space for icon */
+      /* py-2 pr-10 (for clear) pl-10 (for search) */
+      /* Ensure padding accommodates both icons */
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      padding-left: 2.5rem;  /* Space for search icon */
+      padding-right: 2.5rem; /* Space for clear icon */
       display: block;
       width: 100%; 
       font-size: 0.875rem; 
       border: 1px solid #4b5563; 
       box-sizing: border-box; 
+      line-height: 1.25rem; /* Helps align text with icons if icons are 1.25em */
+      /* For debugging: */
+      /* border: 1px solid yellow; */
   }
   .filterInput::placeholder {
       color: #9ca3af; 
@@ -292,16 +324,33 @@
       border-color: #38bdf8; 
       box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4); 
   }
-  .searchIcon { /* This class is applied to the SVG via App.jsx */
+  
+  .searchIcon, .clearButtonIcon { 
       position: absolute;
-      left: 0.75rem; 
-      /* top: 50%; Removed, as parent is flex and aligns items center */
-      /* transform: translateY(-50%); Removed */
-      pointer-events: none;
-      width: 1.25rem; 
-      height: 1.25rem;
+      top: 50%; 
+      transform: translateY(-50%); 
+      width: 1.25rem;  /* Consistent size */
+      height: 1.25rem; /* Consistent size */
       color: #9ca3af; 
+      z-index: 1; 
+      display: flex; /* Helps if SVG needs centering within its own box */
+      align-items: center;
+      justify-content: center;
   }
+  
+  .searchIcon { 
+      left: 0.75rem; 
+      pointer-events: none;
+  }
+  
+  .clearButtonIcon {
+      right: 0.75rem; 
+      cursor: pointer;
+  }
+  .clearButtonIcon:hover {
+      color: #e5e7eb; 
+  }
+  
   
   .errorMessage {
       max-width: 72rem; 
