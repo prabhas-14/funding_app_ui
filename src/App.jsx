@@ -50,7 +50,7 @@ const ClearIconSVG = ({ onClick, className = "" }) => (
 
 
 //const API_URL = 'http://127.0.0.1:5001/api/funding-data'; 
-const API_URL = 'https://funding-app-api.onrender.com/api/funding-data'
+const API_URL = 'https://funding-app-api.onrender.com/api/funding-data';
 
 function App() { 
   const [allMarketData, setAllMarketData] = useState([]);
