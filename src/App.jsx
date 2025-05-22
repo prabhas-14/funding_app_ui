@@ -35,7 +35,8 @@ const SearchIconSVG = () => (
 );
 
 
-const API_URL = 'http://127.0.0.1:5001/api/funding-data'; // Your Python API URL
+// const API_URL = 'http://127.0.0.1:5001/api/funding-data'; // Your Python API URL
+const API_URL = 'https://funding-app-api.onrender.com/api/funding-data'; // Your Python API URL
 
 function App() { 
   const [allMarketData, setAllMarketData] = useState([]);
