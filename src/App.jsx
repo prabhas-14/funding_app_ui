@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styles from './App.module.css'; // Import the CSS Module
 
-// --- Icons (can be kept as simple SVGs or text) ---
-// These are simple SVG components. You can also use an icon library if you prefer.
+// --- Icons ---
 const ArrowUpIcon = ({ className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" 
        className={className} style={{width: '1em', height: '1em', display: 'inline-block'}}>
@@ -29,30 +28,45 @@ const ClockIconSVG = () => (
 );
 const SearchIconSVG = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" 
-       className={styles.searchIcon}> {/* Assuming styles.searchIcon is defined in App.module.css for positioning */}
+       className={styles.searchIcon}>
     <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
   </svg>
 );
+// New Clear Icon (X mark)
+const ClearIconSVG = ({ onClick, className = "" }) => (
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        strokeWidth={1.5} 
+        stroke="currentColor" 
+        className={className} // Will be styled by styles.clearButtonIcon
+        onClick={onClick}
+        style={{ width: '1.25em', height: '1.25em', cursor: 'pointer' }}
+    >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+);
 
 
-// const API_URL = 'http://127.0.0.1:5001/api/funding-data'; // Your Python API URL
-const API_URL = 'https://funding-app-api.onrender.com/api/funding-data'; // Your Python API URL
+const API_URL = 'http://127.0.0.1:5001/api/funding-data'; 
 
 function App() { 
   const [allMarketData, setAllMarketData] = useState([]);
   const [topFundingData, setTopFundingData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timeToNextReset, setTimeToNextReset] = useState({ minutes: 0, seconds: 0 });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); 
   const [apiError, setApiError] = useState(null);
   
   const [filterTerm, setFilterTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'market', direction: 'ascending' });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async () => { 
     setIsLoading(true);
     setApiError(null);
-    console.log("Fetching new funding data from API...");
+    console.log("Fetching funding data from API...");
+    
     try {
       const response = await fetch(API_URL);
       if (!response.ok) {
@@ -61,8 +75,11 @@ function App() {
       }
       const data = await response.json();
       
-      setAllMarketData(Array.isArray(data.all_markets) ? data.all_markets : []);
-      setTopFundingData(Array.isArray(data.top_funding_opportunities) ? data.top_funding_opportunities : []);
+      const allMarkets = Array.isArray(data.all_markets) ? data.all_markets : [];
+      const topOpportunities = Array.isArray(data.top_funding_opportunities) ? data.top_funding_opportunities : [];
+      
+      setAllMarketData(allMarkets);
+      setTopFundingData(topOpportunities);
       
       if (data.last_updated_timestamp) {
         setLastUpdated(new Date(data.last_updated_timestamp * 1000));
@@ -76,12 +93,12 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); 
 
   useEffect(() => {
-    fetchData();
-    const intervalId = setInterval(fetchData, 30000);
-    return () => clearInterval(intervalId);
+    fetchData(); 
+    const intervalId = setInterval(fetchData, 10000); 
+    return () => clearInterval(intervalId); 
   }, [fetchData]);
 
   useEffect(() => {
@@ -118,14 +135,11 @@ function App() {
       sortableItems.sort((a, b) => {
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
-
         if (valA == null && valB == null) return 0;
         if (valA == null) return sortConfig.direction === 'ascending' ? -1 : 1; 
         if (valB == null) return sortConfig.direction === 'ascending' ? 1 : -1;
-
         if (typeof valA === 'string') valA = valA.toLowerCase();
         if (typeof valB === 'string') valB = valB.toLowerCase();
-        
         if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
         if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
@@ -145,6 +159,10 @@ function App() {
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return <SortIcon />;
     return sortConfig.direction === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />;
+  };
+  
+  const handleClearFilter = () => {
+    setFilterTerm('');
   };
 
   return (
@@ -174,7 +192,7 @@ function App() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Top 5 Opportunities</h2>
-              {isLoading && <div className={styles.loadingText}>Updating...</div>}
+              {isLoading && !topFundingData.length && <div className={styles.loadingText}>Updating...</div>}
             </div>
             {topFundingData.length === 0 && !isLoading && !apiError ? (
               <p style={{padding: '1rem', textAlign: 'center'}}>No positive rates.</p>
@@ -213,7 +231,7 @@ function App() {
           <div className={styles.cardHeader} style={{marginBottom: '0.75rem'}}>
              <div className={styles.allMarketsHeader}>
                 <h2 className={`${styles.cardTitle} ${styles.allMarketsTitle}`}>All Markets</h2>
-                <div className={styles.filterInputContainer}>
+                <div className={styles.filterInputContainer}> {/* This container now holds search icon, input, and clear button */}
                     <SearchIconSVG />
                     <input
                     type="text"
@@ -222,6 +240,12 @@ function App() {
                     value={filterTerm}
                     onChange={(e) => setFilterTerm(e.target.value)}
                     />
+                    {filterTerm && ( // Conditionally render the clear button
+                        <ClearIconSVG 
+                            onClick={handleClearFilter} 
+                            className={styles.clearButtonIcon} // Style this in CSS
+                        />
+                    )}
                 </div>
             </div>
           </div>
@@ -238,7 +262,7 @@ function App() {
                       { key: 'market', label: 'Market' },
                       { key: 'hourly_percentage', label: 'Hourly Rate' },
                       { key: 'apr', label: 'Est. APR' },
-                      { key: 'volume_24h', label: 'Volume (24h)'}
+                      { key: 'volume_24h', label: 'Volume (24h)'},
                     ].map(col => (
                       <th
                         key={col.key}
@@ -276,7 +300,7 @@ function App() {
         </div>
       </div>
       <p className={styles.footerText}>
-        Last updated: {lastUpdated.toLocaleTimeString()} (Data auto-refreshes every 30s)
+        Last updated: {lastUpdated.toLocaleTimeString()} (Data auto-refreshes every 10s)
       </p>
       <p className={styles.disclaimerText}>
         Disclaimer: Funding rates are volatile. Data is for informational purposes only. Not financial advice.
