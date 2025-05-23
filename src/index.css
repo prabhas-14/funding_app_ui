@@ -1,0 +1,29 @@
+/* src/index.css */
+
+/* Reset default browser styles for body */
+body {
+    margin: 0;
+    padding: 0; /* Add padding: 0 as well, just in case */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #111827; /* Your main app dark background */
+    color: #f3f4f6; /* Default light text color for the app */
+  }
+  
+  /* Ensure the root div also takes full height if needed, though often not the cause of this specific issue */
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
+  
+  /* You can add other global resets or base styles here */
+  
