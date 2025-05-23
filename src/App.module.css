@@ -371,4 +371,13 @@
       font-size: 0.75rem; 
       margin-top: 0.25rem; 
   }
+
+.contentArea { /* Was .layoutGrid */
+    max-width: 48rem; /* Or your preferred max-width for single column content */
+    margin-left: auto;
+    margin-right: auto;
+    display: flex; 
+    flex-direction: column; 
+    gap: 1.5rem; 
+  }
   
