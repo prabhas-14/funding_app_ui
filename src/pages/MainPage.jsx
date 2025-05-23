@@ -82,8 +82,9 @@ const Sparkline = ({ data, width = 100, height = 30, strokeColorPositive = "#34d
   );
 };
 
-const MARKET_OVERVIEW_API_URL = 'http://127.0.0.1:5001/api/market-overview';
+//const MARKET_OVERVIEW_API_URL = 'http://127.0.0.1:5001/api/market-overview';
 //const MARKET_OVERVIEW_API_URL = 'https://funding-app-api.onrender.com/api/market-overview'
+const MARKET_OVERVIEW_API_URL = 'https://funding-app-api-1vio.onrender.com/api/market-overview'
 
 function MainPage() {
   const [allCoinsData, setAllCoinsData] = useState([]); 
