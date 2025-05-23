@@ -1,4 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist" # Or your actual build output directory relative to the base
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false # Usually not needed, but can sometimes help
