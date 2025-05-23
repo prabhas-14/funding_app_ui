@@ -32,7 +32,6 @@ const SearchIconSVG = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
   </svg>
 );
-// New Clear Icon (X mark)
 const ClearIconSVG = ({ onClick, className = "" }) => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -40,7 +39,7 @@ const ClearIconSVG = ({ onClick, className = "" }) => (
         viewBox="0 0 24 24" 
         strokeWidth={1.5} 
         stroke="currentColor" 
-        className={className} // Will be styled by styles.clearButtonIcon
+        className={className} 
         onClick={onClick}
         style={{ width: '1.25em', height: '1.25em', cursor: 'pointer' }}
     >
@@ -48,13 +47,15 @@ const ClearIconSVG = ({ onClick, className = "" }) => (
     </svg>
 );
 
-
+// API URL for Hyperliquid data (assuming this component is for Hyperliquid)
 //const API_URL = 'http://127.0.0.1:5001/api/funding-data'; 
-const API_URL = 'https://funding-app-api.onrender.com/api/funding-data';
+// If deployed, use your deployed API URL:
+const API_URL = 'https://funding-app-api.onrender.com/api/funding-data'
 
-function App() { 
+
+function App() { // Assuming this App.jsx is effectively HyperliquidPage.jsx
   const [allMarketData, setAllMarketData] = useState([]);
-  const [topFundingData, setTopFundingData] = useState([]);
+  const [topFundingData, setTopFundingData] = useState([]); // Re-added topFundingData state
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timeToNextReset, setTimeToNextReset] = useState({ minutes: 0, seconds: 0 });
   const [isLoading, setIsLoading] = useState(true); 
@@ -66,7 +67,7 @@ function App() {
   const fetchData = useCallback(async () => { 
     setIsLoading(true);
     setApiError(null);
-    console.log("Fetching funding data from API...");
+    console.log("Fetching Hyperliquid funding data from API...");
     
     try {
       const response = await fetch(API_URL);
@@ -76,11 +77,33 @@ function App() {
       }
       const data = await response.json();
       
-      const allMarkets = Array.isArray(data.all_markets) ? data.all_markets : [];
-      const topOpportunities = Array.isArray(data.top_funding_opportunities) ? data.top_funding_opportunities : [];
+      const investmentAmount = 100; 
+
+      const processMarketData = (marketArray) => {
+        if (!Array.isArray(marketArray)) return [];
+        return marketArray.map(item => {
+          const aprPercentage = (typeof item.apr === 'number') ? item.apr : 0; 
+          
+          const yearlyEarning = investmentAmount * (aprPercentage / 100);
+          const monthlyEarning = yearlyEarning / 12;
+          const dailyEarning = yearlyEarning / 365;
+          const hourlyEarning = dailyEarning / 24; 
+
+          return {
+            ...item,
+            earnings_1h: hourlyEarning,
+            earnings_1d: dailyEarning,
+            earnings_1mo: monthlyEarning,
+            earnings_1y: yearlyEarning,
+          };
+        });
+      };
+      
+      const allMarkets = processMarketData(data.all_markets);
+      const topOpportunities = processMarketData(data.top_funding_opportunities); // Process top opportunities as well
       
       setAllMarketData(allMarkets);
-      setTopFundingData(topOpportunities);
+      setTopFundingData(topOpportunities); // Set topFundingData
       
       if (data.last_updated_timestamp) {
         setLastUpdated(new Date(data.last_updated_timestamp * 1000));
@@ -89,7 +112,7 @@ function App() {
       }
 
     } catch (error) {
-      console.error("Failed to fetch funding data from API:", error);
+      console.error("Failed to fetch Hyperliquid funding data:", error);
       setApiError(error.message);
     } finally {
       setIsLoading(false);
@@ -136,11 +159,19 @@ function App() {
       sortableItems.sort((a, b) => {
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
+        const numericSortKeys = ['hourly_percentage', 'apr', 'volume_24h', 'open_interest', 'earnings_1h', 'earnings_1d', 'earnings_1mo', 'earnings_1y'];
+        if (numericSortKeys.includes(sortConfig.key)) {
+            valA = parseFloat(a[sortConfig.key]);
+            valB = parseFloat(b[sortConfig.key]);
+        } else if (typeof valA === 'string') {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+        }
+        
         if (valA == null && valB == null) return 0;
         if (valA == null) return sortConfig.direction === 'ascending' ? -1 : 1; 
         if (valB == null) return sortConfig.direction === 'ascending' ? 1 : -1;
-        if (typeof valA === 'string') valA = valA.toLowerCase();
-        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
         if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
         if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
@@ -166,73 +197,97 @@ function App() {
     setFilterTerm('');
   };
 
+  const mainTableHeaders = [
+    { key: 'market', label: 'Market', sortable: true },
+    { key: 'hourly_percentage', label: 'Hourly %', className: styles.textRight, sortable: true },
+    { key: 'apr', label: 'APR %', className: styles.textRight, sortable: true },
+    { key: 'earnings_1h', label: '$100/1h', className: styles.textRight, sortable: true },
+    { key: 'earnings_1d', label: '$100/1d', className: styles.textRight, sortable: true },
+    { key: 'earnings_1mo', label: '$100/30d', className: styles.textRight, sortable: true },
+    { key: 'earnings_1y', label: '$100/1y', className: styles.textRight, sortable: true },
+    { key: 'volume_24h', label: 'Volume (24h)', className: styles.textRight, sortable: true },
+    { key: 'open_interest', label: 'Open Interest', className: styles.textRight, sortable: true }
+  ];
+  
+  const top5TableHeaders = [ // Re-added headers for Top 5 section
+    { key: 'market', label: 'Market', sortable: false }, 
+    { key: 'hourly_percentage', label: 'Hourly %', className: styles.textRight, sortable: false },
+    { key: 'apr', label: 'APR %', className: styles.textRight, sortable: false },
+    { key: 'earnings_1h', label: '$100/1h', className: styles.textRight, sortable: false },
+  ];
+
+
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.dashboardContainer} style={{paddingTop: '0'}}> 
       <header className={styles.header}>
-        <h1 className={styles.title}>Hyperliquid Funding Rate Dashboard</h1>
+        <h1 className={styles.title} style={{fontSize: '1.8rem', marginBottom: '0.5rem'}}>Hyperliquid Funding Rates</h1>
       </header>
 
       {apiError && (
         <div className={styles.errorMessage}>
           <p className={styles.errorMessageStrong}>Error fetching data:</p>
           <p className={styles.errorMessageSmall}>{apiError}</p>
-          <p className={styles.errorMessageSmall}>Ensure the Python API server is running on {API_URL.replace('/api/funding-data', '')}.</p>
         </div>
       )}
 
-      <div className={styles.layoutGrid}>
-        <div className={styles.leftColumn}>
-          <div className={`${styles.card} ${styles.timerCard}`}>
-            <h2 className={styles.cardTitle}><ClockIconSVG /> Next Funding Reset:</h2>
-            <p className={styles.timerText}>
-              {String(timeToNextReset.minutes).padStart(2, '0')}:
-              {String(timeToNextReset.seconds).padStart(2, '0')}
-            </p>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>Top 5 Opportunities</h2>
-              {isLoading && !topFundingData.length && <div className={styles.loadingText}>Updating...</div>}
-            </div>
-            {topFundingData.length === 0 && !isLoading && !apiError ? (
-              <p style={{padding: '1rem', textAlign: 'center'}}>No positive rates.</p>
-            ) : topFundingData.length === 0 && isLoading ? (
-              <p style={{padding: '1rem', textAlign: 'center'}}>Loading top rates...</p>
-            ): (
-              <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Market</th>
-                      <th className={styles.textRight}>Hourly</th>
-                      <th className={styles.textRight}>APR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topFundingData.map((item, index) => (
-                      <tr key={item.market + index + '-top'}>
-                        <td className={styles.marketName}>{item.market}</td>
-                        <td className={`${styles.textRight} ${styles.monoFont} ${item.hourly_percentage > 0 ? styles.positiveRate : styles.negativeRate}`}>
-                          {item.hourly_percentage != null ? item.hourly_percentage.toFixed(4) : 'N/A'}%
-                        </td>
-                        <td className={`${styles.textRight} ${styles.monoFont} ${styles.aprColor}`}>
-                          {item.apr != null ? item.apr.toFixed(2) : 'N/A'}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+      {/* Main content area - will now stack cards vertically */}
+      <div className={styles.contentArea}> {/* New wrapper for all content cards */}
+        
+        <div className={`${styles.card} ${styles.timerCard} ${styles.contentCard}`}> {/* Added contentCard class */}
+          <h2 className={styles.cardTitle}><ClockIconSVG /> Next Funding Reset:</h2>
+          <p className={styles.timerText}>
+            {String(timeToNextReset.minutes).padStart(2, '0')}:
+            {String(timeToNextReset.seconds).padStart(2, '0')}
+          </p>
         </div>
 
-        <div className={`${styles.rightColumn} ${styles.card}`}>
+        {/* Top 5 Opportunities Card RE-ADDED */}
+        <div className={`${styles.card} ${styles.contentCard}`}> {/* Added contentCard class */}
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Top 5 Opportunities</h2>
+            {isLoading && !topFundingData.length && <div className={styles.loadingText}>Updating...</div>}
+          </div>
+          {topFundingData.length === 0 && !isLoading && !apiError ? (
+            <p style={{padding: '1rem', textAlign: 'center'}}>No positive rates.</p>
+          ) : topFundingData.length === 0 && isLoading ? (
+            <p style={{padding: '1rem', textAlign: 'center'}}>Loading top rates...</p>
+          ): (
+            <div className={styles.tableContainer}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    {top5TableHeaders.map(header => (
+                      <th key={header.key} className={header.className || ''}>{header.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {topFundingData.map((item, index) => (
+                    <tr key={item.market + index + '-top'}>
+                      <td className={styles.marketName}>{item.market}</td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.hourly_percentage > 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        {item.hourly_percentage != null ? item.hourly_percentage.toFixed(4) : 'N/A'}%
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${styles.aprColor}`}>
+                        {item.apr != null ? item.apr.toFixed(2) : 'N/A'}%
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.earnings_1h >= 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        ${item.earnings_1h != null ? item.earnings_1h.toFixed(4) : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        
+        {/* All Markets Card */}
+        <div className={`${styles.card} ${styles.contentCard}`}> {/* Added contentCard class */}
           <div className={styles.cardHeader} style={{marginBottom: '0.75rem'}}>
              <div className={styles.allMarketsHeader}>
                 <h2 className={`${styles.cardTitle} ${styles.allMarketsTitle}`}>All Markets</h2>
-                <div className={styles.filterInputContainer}> {/* This container now holds search icon, input, and clear button */}
+                <div className={styles.filterInputContainer}>
                     <SearchIconSVG />
                     <input
                     type="text"
@@ -241,10 +296,10 @@ function App() {
                     value={filterTerm}
                     onChange={(e) => setFilterTerm(e.target.value)}
                     />
-                    {filterTerm && ( // Conditionally render the clear button
+                    {filterTerm && (
                         <ClearIconSVG 
                             onClick={handleClearFilter} 
-                            className={styles.clearButtonIcon} // Style this in CSS
+                            className={styles.clearButtonIcon}
                         />
                     )}
                 </div>
@@ -259,19 +314,14 @@ function App() {
               <table className={styles.table}>
                 <thead >
                   <tr>
-                    {[
-                      { key: 'market', label: 'Market' },
-                      { key: 'hourly_percentage', label: 'Hourly Rate' },
-                      { key: 'apr', label: 'Est. APR' },
-                      { key: 'volume_24h', label: 'Volume (24h)'},
-                    ].map(col => (
+                    {mainTableHeaders.map(header => (
                       <th
-                        key={col.key}
-                        className={`${styles.sortableHeader} ${col.key.includes('Rate') || col.key.includes('apr') || col.key.includes('volume') ? styles.textRight : ''}`}
-                        onClick={() => requestSort(col.key)}
+                        key={header.key}
+                        className={`${styles.sortableHeader} ${header.className || ''}`}
+                        onClick={() => header.sortable && requestSort(header.key)}
                       >
-                        {col.label}
-                        <span className={styles.sortIconContainer}>{getSortIcon(col.key)}</span>
+                        {header.label}
+                        {header.sortable && <span className={styles.sortIconContainer}>{getSortIcon(header.key)}</span>}
                       </th>
                     ))}
                   </tr>
@@ -286,8 +336,23 @@ function App() {
                       <td className={`${styles.textRight} ${styles.monoFont} ${styles.aprColor}`}>
                         {item.apr != null ? item.apr.toFixed(2) : 'N/A'}%
                       </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.earnings_1h >= 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        ${item.earnings_1h != null ? item.earnings_1h.toFixed(4) : 'N/A'}
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.earnings_1d >= 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        ${item.earnings_1d != null ? item.earnings_1d.toFixed(2) : 'N/A'}
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.earnings_1mo >= 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        ${item.earnings_1mo != null ? item.earnings_1mo.toFixed(2) : 'N/A'}
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${item.earnings_1y >= 0 ? styles.positiveRate : styles.negativeRate}`}>
+                        ${item.earnings_1y != null ? item.earnings_1y.toFixed(2) : 'N/A'}
+                      </td>
                        <td className={`${styles.textRight} ${styles.monoFont} ${styles.volumeColor}`}>
                         ${item.volume_24h != null ? item.volume_24h.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : 'N/A'}
+                      </td>
+                      <td className={`${styles.textRight} ${styles.monoFont} ${styles.volumeColor}`}> 
+                        ${item.open_interest != null ? item.open_interest.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -299,7 +364,8 @@ function App() {
             </div>
           )}
         </div>
-      </div>
+      </div> {/* End of .contentArea (or what was .layoutGrid) */}
+
       <p className={styles.footerText}>
         Last updated: {lastUpdated.toLocaleTimeString()} (Data auto-refreshes every 10s)
       </p>
